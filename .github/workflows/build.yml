@@ -28,37 +28,34 @@ jobs:
         run: |
           pip install Pillow
 
-      - name: Generate App Icon and Config
+      - name: Generate App Icon, Manifest and Package
         run: |
           python - << 'EOF'
           import os
           from PIL import Image, ImageDraw
           
           os.makedirs('src/common', exist_ok=True)
-          # Создаем холст 512x512 для идеальной iOS-детализации
+          os.makedirs('src/pages/index', exist_ok=True)
+          
+          # 1. Рисуем иконку в стиле iOS Заметок
           img = Image.new('RGB', (512, 512), color='#000000')
           draw = ImageDraw.Draw(img)
-          
-          # 1. Белое скругленное основание листа (стиль Apple Notes)
           draw.rounded_rectangle((30, 30, 482, 482), radius=115, fill='#FFFFFF')
-          
-          # 2. Желтая отрывная полоса сверху
           draw.rounded_rectangle((30, 30, 482, 130), radius=30, fill='#EBB700')
-          draw.rectangle((30, 80, 482, 130), fill='#EBB700') # Сглаживаем нижние углы полосы
+          draw.rectangle((30, 80, 482, 130), fill='#EBB700')
           
-          # 3. Аккуратные серые линовки-строчки, как в оригинальном приложении
           line_color = '#E5E5EA'
           draw.line([(60, 200), (452, 200)], fill=line_color, width=6)
           draw.line([(60, 270), (452, 270)], fill=line_color, width=6)
           draw.line([(60, 340), (452, 340)], fill=line_color, width=6)
           draw.line([(60, 410), (452, 410)], fill=line_color, width=6)
           
-          # Сжатие LANCZOS для сохранения бритвенной четкости на AMOLED-экране браслета
           final_img = img.resize((192, 192), Image.Resampling.LANCZOS)
           final_img.save('src/common/icon.png')
           final_img.save('src/common/logo.png')
           
           import json
+          # 2. Перезаписываем чистый manifest.json со всеми правами
           manifest = {
               "package": "com.soldatov.clipboard",
               "name": "Буфер",
@@ -88,7 +85,21 @@ jobs:
           }
           with open('src/manifest.json', 'w', encoding='utf-8') as f:
               json.dump(manifest, f, ensure_ascii=False, indent=2)
-          print("Конфигурация с iOS-иконкой создана!")
+              
+          # 3. Генерируем недостающий package.json, чтобы npm не ругался
+          package_json = {
+              "name": "com.soldatov.clipboard",
+              "version": "1.0.0",
+              "description": "Watch Clipboard",
+              "dependencies": {},
+              "devDependencies": {
+                  "aiot": "latest"
+              }
+          }
+          with open('package.json', 'w', encoding='utf-8') as f:
+              json.dump(package_json, f, ensure_ascii=False, indent=2)
+              
+          print("Все конфигурационные файлы успешно созданы!")
           EOF
 
       - name: Install and Build Clipboard
