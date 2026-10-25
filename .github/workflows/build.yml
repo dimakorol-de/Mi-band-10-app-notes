@@ -102,9 +102,10 @@ jobs:
           with open('package.json', 'w', encoding='utf-8') as f:
               json.dump(package_json, f, ensure_ascii=False, indent=2)
               
-          # 4. Создание обязательного файла src/app.ux
+          # 4. Создание обязательного файла src/app.ux без кривых символов
+          app_code = "<script>\nexport default {\n  onCreate() {}\n}\n</script>"
           with open('src/app.ux', 'w', encoding='utf-8') as f:
-              f.write('<script>\nexport default {\n  onCreate() {}\n}\n<\/script>')
+              f.write(app_code)
               
           print("Все файлы конфигурации по инструкции успешно сгенерированы!")
           EOF
@@ -121,5 +122,5 @@ jobs:
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rpk-binaries
+          name: rpk-build
           path: dist_output/
