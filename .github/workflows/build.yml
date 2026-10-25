@@ -1,0 +1,107 @@
+name: Build and Release Clipboard App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Python Dependencies
+        run: |
+          pip install Pillow
+
+      - name: Generate App Icon and Config
+        run: |
+          python - << 'EOF'
+          import os
+          from PIL import Image, ImageDraw
+          
+          os.makedirs('src/common', exist_ok=True)
+          # Создаем холст 512x512 для идеальной iOS-детализации
+          img = Image.new('RGB', (512, 512), color='#000000')
+          draw = ImageDraw.Draw(img)
+          
+          # 1. Белое скругленное основание листа (стиль Apple Notes)
+          draw.rounded_rectangle((30, 30, 482, 482), radius=115, fill='#FFFFFF')
+          
+          # 2. Желтая отрывная полоса сверху
+          draw.rounded_rectangle((30, 30, 482, 130), radius=30, fill='#EBB700')
+          draw.rectangle((30, 80, 482, 130), fill='#EBB700') # Сглаживаем нижние углы полосы
+          
+          # 3. Аккуратные серые линовки-строчки, как в оригинальном приложении
+          line_color = '#E5E5EA'
+          draw.line([(60, 200), (452, 200)], fill=line_color, width=6)
+          draw.line([(60, 270), (452, 270)], fill=line_color, width=6)
+          draw.line([(60, 340), (452, 340)], fill=line_color, width=6)
+          draw.line([(60, 410), (452, 410)], fill=line_color, width=6)
+          
+          # Сжатие LANCZOS для сохранения бритвенной четкости на AMOLED-экране браслета
+          final_img = img.resize((192, 192), Image.Resampling.LANCZOS)
+          final_img.save('src/common/icon.png')
+          final_img.save('src/common/logo.png')
+          
+          import json
+          manifest = {
+              "package": "com.soldatov.clipboard",
+              "name": "Буфер",
+              "versionName": "1.0.0",
+              "versionCode": 1,
+              "minPlatformVersion": 1000,
+              "icon": "/common/icon.png",
+              "deviceTypeList": ["band", "watch"],
+              "features": [
+                  { "name": "system.router" },
+                  { "name": "system.vibrator" },
+                  { "name": "system.storage" },
+                  { "name": "system.fetch" }
+              ],
+              "config": {
+                  "logLevel": "log",
+                  "designWidth": 212
+              },
+              "router": {
+                  "entry": "pages/index",
+                  "pages": {
+                      "pages/index": {
+                          "component": "index"
+                      }
+                  }
+              }
+          }
+          with open('src/manifest.json', 'w', encoding='utf-8') as f:
+              json.dump(manifest, f, ensure_ascii=False, indent=2)
+          print("Конфигурация с iOS-иконкой создана!")
+          EOF
+
+      - name: Install and Build Clipboard
+        run: |
+          npm install
+          mkdir -p sign/release
+          openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout sign/release/private.pem -out sign/release/certificate.pem -subj "/CN=localhost"
+          npx aiot release
+          mkdir -p dist_output
+          find dist/ -name "*.rpk" -not -path "*/node_modules/*" -exec cp {} dist_output/clipboard.rpk \;
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpk-binaries
+          path: dist_output/
