@@ -55,7 +55,7 @@ jobs:
           final_img.save('src/common/logo.png')
           
           import json
-          # 2. Перезаписываем чистый manifest.json со всеми правами
+          # 2. Перезаписываем чистый manifest.json
           manifest = {
               "package": "com.soldatov.clipboard",
               "name": "Буфер",
@@ -86,14 +86,16 @@ jobs:
           with open('src/manifest.json', 'w', encoding='utf-8') as f:
               json.dump(manifest, f, ensure_ascii=False, indent=2)
               
-          # 3. Генерируем недостающий package.json, чтобы npm не ругался
+          # 3. Генерируем правильный package.json со сборщиком hap-toolkit
           package_json = {
               "name": "com.soldatov.clipboard",
               "version": "1.0.0",
-              "description": "Watch Clipboard",
-              "dependencies": {},
+              "scripts": {
+                "build": "hap build",
+                "release": "hap release"
+              },
               "devDependencies": {
-                  "aiot": "latest"
+                  "hap-toolkit": "^0.6.13"
               }
           }
           with open('package.json', 'w', encoding='utf-8') as f:
@@ -107,7 +109,7 @@ jobs:
           npm install
           mkdir -p sign/release
           openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout sign/release/private.pem -out sign/release/certificate.pem -subj "/CN=localhost"
-          npx aiot release
+          npm run release
           mkdir -p dist_output
           find dist/ -name "*.rpk" -not -path "*/node_modules/*" -exec cp {} dist_output/clipboard.rpk \;
 
