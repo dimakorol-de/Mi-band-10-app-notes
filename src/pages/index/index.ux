@@ -1,0 +1,166 @@
+<template>
+  <div class="container">
+    
+    <!-- ЭКРАН 1: ОЖИДАНИЕ ТЕКСТА (Дизайнерский Оранжевый QR) -->
+    <div if="{{ !hasData }}" class="screen-layout">
+      <div class="header-zone">
+        <text class="app-title">CLIPBOARD</text>
+        <div class="status-badge">
+          <div class="pulse-dot"></div>
+          <text class="status-text">READY</text>
+        </div>
+      </div>
+      
+      <!-- Парящий QR-код с неоновой оранжевой тенью -->
+      <div class="qr-container">
+        <image class="qr-element" src="{{ qrCodeUrl }}"></image>
+      </div>
+      
+      <div class="info-box">
+        <text class="hint-text">Сканируйте через iPhone</text>
+        <text class="sub-hint-text">для мгновенной передачи текста</text>
+      </div>
+      
+      <input type="button" class="btn btn-primary" value="Проверить шлюз" onclick="checkServerData" />
+    </div>
+
+    <!-- РЕЖИМ 2: ЧТЕНИЕ ЗАМЕТКИ (Премиум Блокнот) -->
+    <div if="{{ hasData }}" class="screen-layout">
+      <div class="header-zone">
+        <text class="app-title">ЗАМЕТКА</text>
+        <text class="char-count">TEXT MEMORY</text>
+      </div>
+      
+      <!-- Карточка с текстом премиум-уровня -->
+      <div class="text-card">
+        <text class="main-text">{{ savedText }}</text>
+      </div>
+      
+      <input type="button" class="btn btn-danger" value="Очистить буфер" onclick="clearData" />
+    </div>
+
+    <!-- Футер -->
+    <div class="footer-credits">
+      <text class="credits-label">SYSTEM LOG BY</text>
+      <text class="credits-name">A. SOLDATOV</text>
+    </div>
+  </div>
+</template>
+
+<style>
+  /* Общие настройки экрана */
+  .container { flex-direction: column; align-items: center; width: 212px; padding-top: 32px; padding-bottom: 32px; background-color: #000000; }
+  .screen-layout { flex-direction: column; align-items: center; width: 212px; }
+  
+  /* Верхняя панель (Header) */
+  .header-zone { flex-direction: column; align-items: center; margin-bottom: 20px; width: 190px; }
+  .app-title { font-size: 16px; font-weight: 900; color: #FFFFFF; letter-spacing: 2px; text-align: center; }
+  
+  /* Индикатор статуса в фирменном оранжевом цвете */
+  .status-badge { align-items: center; justify-content: center; margin-top: 4px; background-color: rgba(255, 69, 0, 0.1); padding: 2px 10px; border-radius: 20px; }
+  .pulse-dot { width: 6px; height: 6px; border-radius: 3px; background-color: #FF4500; margin-right: 6px; }
+  .status-text { font-size: 10px; font-weight: bold; color: #FF4500; letter-spacing: 1px; }
+  
+  .char-count { font-size: 10px; font-weight: bold; color: #8E8E93; letter-spacing: 1px; margin-top: 4px; }
+
+  /* Контейнер QR-кода с оранжевым свечением */
+  .qr-container { width: 144px; height: 144px; background-color: #FFFFFF; border-radius: 16px; justify-content: center; align-items: center; padding: 8px; margin-bottom: 20px;
+    box-shadow: 0px 4px 20px rgba(255, 69, 0, 0.2);
+  }
+  .qr-element { width: 128px; height: 128px; }
+  
+  /* Блок подсказок */
+  .info-box { flex-direction: column; align-items: center; margin-bottom: 20px; width: 190px; }
+  .hint-text { font-size: 12px; font-weight: bold; color: #E5E5EA; text-align: center; }
+  .sub-hint-text { font-size: 10px; color: #8E8E93; text-align: center; margin-top: 2px; }
+  
+  /* Премиум Карточка для Текста */
+  .text-card { width: 192px; background-color: #1C1C1E; border-radius: 14px; border: 1px solid #2C2C2E; padding: 14px; margin-bottom: 25px; }
+  .main-text { font-size: 14px; color: #FFFFFF; line-height: 22px; font-weight: 500; }
+  
+  /* Фирменные Кнопки управления */
+  .btn { width: 180px; height: 42px; border-radius: 12px; font-size: 14px; font-weight: bold; letter-spacing: 1px; }
+  .btn-primary { background-color: #FF4500; color: #FFFFFF; }
+  .btn-danger { background-color: #48484A; color: #E5E5EA; }
+  
+  /* Футер */
+  .footer-credits { flex-direction: column; align-items: center; margin-top: auto; width: 180px; padding-top: 20px; }
+  .credits-label { font-size: 9px; color: #48484A; letter-spacing: 1px; }
+  .credits-name { font-size: 11px; font-weight: 900; color: #FFD700; letter-spacing: 1px; margin-top: 2px; }
+</style>
+
+<script>
+  import fetch from '@system.fetch'
+  import storage from '@system.storage'
+  import vibrator from '@system.vibrator'
+  
+  export default {
+    private: {
+      hasData: false,
+      savedText: '',
+      deviceId: 'mb10_' + Math.floor(100000 + Math.random() * 900000),
+      checkIntervalId: null,
+      qrCodeUrl: ''
+    },
+    onCreate() {
+      const userWebUrl = 'https://keyvalue.xyz' + this.deviceId;
+      this.qrCodeUrl = 'https://qrserver.com' + encodeURIComponent(userWebUrl);
+      this.loadLocalData();
+    },
+    onDestroy() {
+      this.stopAutoCheck();
+    },
+    loadLocalData() {
+      storage.get({
+        key: 'saved_clipboard_text',
+        success: (data) => {
+          if (data && data.trim() !== '') {
+            this.savedText = data;
+            this.hasData = true;
+          } else {
+            this.startAutoCheck();
+          }
+        },
+        fail: () => {
+          this.startAutoCheck();
+        }
+      });
+    },
+    startAutoCheck() {
+      this.checkServerData();
+      this.checkIntervalId = setInterval(() => {
+        this.checkServerData();
+      }, 5000);
+    },
+    stopAutoCheck() {
+      if (this.checkIntervalId) {
+        clearInterval(this.checkIntervalId);
+        this.checkIntervalId = null;
+      }
+    },
+    checkServerData() {
+      if (this.hasData) return;
+      
+      fetch.fetch({
+        url: 'https://keyvalue.xyz' + this.deviceId,
+        method: 'GET',
+        success: (response) => {
+          if (response.code === 200 && response.data && response.data.trim() !== '') {
+            this.savedText = response.data;
+            this.hasData = true;
+            this.stopAutoCheck();
+            storage.set({ key: 'saved_clipboard_text', value: response.data });
+            try { vibrator.vibrate({ mode: 'long' }); } catch(e){}
+          }
+        }
+      });
+    },
+    clearData() {
+      this.savedText = '';
+      this.hasData = false;
+      storage.delete({ key: 'saved_clipboard_text' });
+      try { vibrator.vibrate({ mode: 'short' }); } catch(e){}
+      this.startAutoCheck();
+    }
+  }
+</script>
