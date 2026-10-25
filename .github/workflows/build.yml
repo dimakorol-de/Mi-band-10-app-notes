@@ -28,7 +28,7 @@ jobs:
         run: |
           pip install Pillow
 
-      - name: Generate App Icon, Manifest and Package
+      - name: Generate Project Files according to Guide
         run: |
           python - << 'EOF'
           import os
@@ -37,7 +37,7 @@ jobs:
           os.makedirs('src/common', exist_ok=True)
           os.makedirs('src/pages/index', exist_ok=True)
           
-          # 1. Рисуем иконку в стиле iOS Заметок
+          # 1. Генерация премиальной iOS-иконки Заметок (холст 512x512)
           img = Image.new('RGB', (512, 512), color='#000000')
           draw = ImageDraw.Draw(img)
           draw.rounded_rectangle((30, 30, 482, 482), radius=115, fill='#FFFFFF')
@@ -51,18 +51,18 @@ jobs:
           draw.line([(60, 410), (452, 410)], fill=line_color, width=6)
           
           final_img = img.resize((192, 192), Image.Resampling.LANCZOS)
-          final_img.save('src/common/icon.png')
           final_img.save('src/common/logo.png')
+          print("Иконка Заметок успешно создана!")
           
           import json
-          # 2. Перезаписываем чистый manifest.json
+          # 2. Создание manifest.json строго под Mi Band 10 (designWidth: 212, watch+band)
           manifest = {
               "package": "com.soldatov.clipboard",
               "name": "Буфер",
               "versionName": "1.0.0",
               "versionCode": 1,
               "minPlatformVersion": 1000,
-              "icon": "/common/icon.png",
+              "icon": "/common/logo.png",
               "deviceTypeList": ["band", "watch"],
               "features": [
                   { "name": "system.router" },
@@ -86,30 +86,35 @@ jobs:
           with open('src/manifest.json', 'w', encoding='utf-8') as f:
               json.dump(manifest, f, ensure_ascii=False, indent=2)
               
-          # 3. Генерируем правильный package.json со сборщиком hap-toolkit
+          # 3. Создание package.json по гайду под aiot-toolkit
           package_json = {
               "name": "com.soldatov.clipboard",
               "version": "1.0.0",
-              "scripts": {
-                "build": "hap build",
-                "release": "hap release"
+              "private": True,
+              "scripts": { 
+                  "build": "aiot build", 
+                  "release": "aiot release" 
               },
-              "devDependencies": {
-                  "hap-toolkit": "^0.6.13"
+              "devDependencies": { 
+                  "aiot-toolkit": "latest" 
               }
           }
           with open('package.json', 'w', encoding='utf-8') as f:
               json.dump(package_json, f, ensure_ascii=False, indent=2)
               
-          print("Все конфигурационные файлы успешно созданы!")
+          # 4. Создание обязательного файла src/app.ux
+          with open('src/app.ux', 'w', encoding='utf-8') as f:
+              f.write('<script>\nexport default {\n  onCreate() {}\n}\n<\/script>')
+              
+          print("Все файлы конфигурации по инструкции успешно сгенерированы!")
           EOF
 
-      - name: Install and Build Clipboard
+      - name: Install and Build via aiot-toolkit
         run: |
           npm install
           mkdir -p sign/release
           openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout sign/release/private.pem -out sign/release/certificate.pem -subj "/CN=localhost"
-          npm run release
+          npx aiot release
           mkdir -p dist_output
           find dist/ -name "*.rpk" -not -path "*/node_modules/*" -exec cp {} dist_output/clipboard.rpk \;
 
