@@ -16,7 +16,7 @@
         <text class="hint-text">Введите этот код на сайте</text>
         <text class="sub-hint-text">Прикрепите текстовый файл .txt</text>
       </div>
-      <input type="button" class="btn btn-primary" value="Загрузить шпору" onclick="getPasteId" />
+      <input type="button" class="btn btn-primary" value="Загрузить шпору" onclick="checkServerData" />
     </div>
 
     <div if="{{ hasData }}" class="screen-layout">
@@ -81,41 +81,28 @@
         }
       });
     },
-    getPasteId() {
+    checkServerData() {
+      if (this.hasData) return;
+      
       const s = '/';
-      const checkUrl = 'https:' + s + s + 'keyvalue.xyz' + s + 'v1' + s + this.deviceId + s + 'id';
+      const targetUrl = 'https:' + s + s + 'keyvalue.xyz' + s + 'v1' + s + this.deviceId + s + 'note';
       
       fetch.fetch({
-        url: checkUrl,
+        url: targetUrl,
         method: 'GET',
         responseType: 'text',
-        success: (res) => {
-          if (res.code === 200 && res.data) {
-            this.fetchMainText(res.data.trim());
+        success: (response) => {
+          if (response.code === 200 && response.data && response.data.trim() !== '') {
+            this.savedText = response.data;
+            this.hasData = true;
+            storage.set({ key: 'saved_clipboard_text', value: response.data });
+            try { vibrator.vibrate({ mode: 'long' }); } catch(e){}
           } else {
             try { vibrator.vibrate({ mode: 'short' }); } catch(e){}
           }
         },
         fail: () => {
           try { vibrator.vibrate({ mode: 'short' }); } catch(e){}
-        }
-      });
-    },
-    fetchMainText(id) {
-      const s = '/';
-      const textUrl = 'https:' + s + s + 'paste.c-net.org' + s + id;
-      
-      fetch.fetch({
-        url: textUrl,
-        method: 'GET',
-        responseType: 'text',
-        success: (response) => {
-          if (response.code === 200 && response.data) {
-            this.savedText = response.data;
-            this.hasData = true;
-            storage.set({ key: 'saved_clipboard_text', value: response.data });
-            try { vibrator.vibrate({ mode: 'long' }); } catch(e){}
-          }
         }
       });
     },
