@@ -3,26 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watch Clipboard Shuttler</title>
+    <title>Watch Clipboard</title>
     <style>
-        body { background-color: #000000; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 30px 20px; margin: 0; }
-        .card { width: 100%; max-width: 400px; background: #1C1C1E; border-radius: 16px; padding: 20px; box-shadow: 0 4px 30px rgba(255, 69, 0, 0.1); border: 1px solid #2C2C2E; box-sizing: border-box; }
-        h1 { font-size: 20px; font-weight: 900; letter-spacing: 2px; color: #FF4500; margin-top: 0; text-align: center; }
-        p { font-size: 13px; color: #8E8E93; text-align: center; margin-bottom: 20px; letter-spacing: 1px; }
-        .input-code { width: 100%; height: 46px; background-color: #2C2C2E; border: 2px solid #FF4500; border-radius: 12px; color: #FFFFFF; text-align: center; font-size: 18px; font-weight: bold; letter-spacing: 2px; box-sizing: border-box; margin-bottom: 15px; }
+        body { background-color: #000000; color: #FFFFFF; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 30px 20px; margin: 0; }
+        .card { width: 100%; max-width: 400px; background: #1C1C1E; border-radius: 16px; padding: 20px; border: 1px solid #2C2C2E; box-sizing: border-box; }
+        h1 { font-size: 20px; font-weight: 900; color: #FF4500; text-align: center; margin-top: 0; }
+        p { font-size: 13px; color: #8E8E93; text-align: center; margin-bottom: 20px; }
+        .input-code { width: 100%; height: 46px; background-color: #2C2C2E; border: 2px solid #FF4500; border-radius: 12px; color: #FFFFFF; text-align: center; font-size: 18px; font-weight: bold; box-sizing: border-box; margin-bottom: 15px; }
         textarea { width: 100%; height: 150px; background-color: #2C2C2E; border: 1px solid #3A3A3C; border-radius: 12px; color: #FFFFFF; padding: 12px; font-size: 15px; resize: none; box-sizing: border-box; margin-bottom: 15px; }
-        .file-label { display: block; text-align: center; background: rgba(255, 69, 0, 0.1); color: #FF4500; border: 2px dashed #FF4500; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 15px; letter-spacing: 1px; }
+        .file-label { display: block; text-align: center; background: rgba(255, 69, 0, 0.1); color: #FF4500; border: 2px dashed #FF4500; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 15px; }
         input[type="file"] { display: none; }
-        button { width: 100%; height: 46px; background-color: #FF4500; border: none; border-radius: 12px; color: #FFFFFF; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; letter-spacing: 1px; }
-        button:active { background-color: #CC3700; }
-        .status { font-size: 13px; font-weight: bold; text-align: center; margin-top: 15px; display: none; letter-spacing: 1px; }
+        button { width: 100%; height: 46px; background-color: #FF4500; border: none; border-radius: 12px; color: #FFFFFF; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .status { font-size: 13px; font-weight: bold; text-align: center; margin-top: 15px; display: none; }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>CLIPBOARD TO WATCH</h1>
         <p>Введите код с экрана браслета для отправки текста</p>
-        <input type="text" id="watch-code" class="input-code" placeholder="КОД С ЧАСОВ" value="77777" maxlength="5">
+        <input type="text" id="watch-code" class="input-code" value="77777" maxlength="5">
         <label class="file-label" id="file-drop">
             Выбрать текстовый файл .txt
             <input type="file" id="file-input" accept=".txt">
@@ -34,7 +33,7 @@
 
     <script>
         document.getElementById('file-input').addEventListener('change', function(e) {
-            const file = e.target.files;
+            const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function(evt) {
@@ -53,22 +52,30 @@
             if (!text.trim()) { alert('Введите текст!'); return; }
             
             statusMsg.style.display = "block";
-            statusMsg.innerText = "Отправка...";
+            statusMsg.innerText = "Отправка через прокси...";
             statusMsg.style.color = "#FF4500";
 
             try {
-                // Прямой обход CORS через Allorigins прокси
-                const targetApi = 'https://keyvalue.xyz_' + code + '/note';
-                const response = await fetch('https://allorigins.win' + encodeURIComponent(targetApi), {
+                // Разрезаем ссылки на части, чтобы буфер Safari ничего не ломал
+                const p1 = 'https://api.all';
+                const p2 = 'origins.win/raw?url=';
+                const proxy = p1 + p2;
+
+                const api1 = 'https://key';
+                const api2 = 'value.xyz/v1/mb10_clip_';
+                const targetApi = api1 + api2 + code + '/note';
+
+                const response = await fetch(proxy + encodeURIComponent(targetApi), {
                     method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
                     body: text
                 });
 
                 if (response.ok) {
-                    statusMsg.innerText = "Успешно отправлено! Нажмите кнопку на часах.";
+                    statusMsg.innerText = "🚀 Успешно отправлено! Жмите кнопку на часах.";
                     statusMsg.style.color = "#34C759";
                 } else {
-                    statusMsg.innerText = "Ошибка шлюза передачи.";
+                    statusMsg.innerText = "Ошибка сервера: " + response.status;
                     statusMsg.style.color = "#FF3B30";
                 }
             } catch (err) {
