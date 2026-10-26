@@ -1,0 +1,6 @@
+  "features": [
+    { "name": "system.fetch" },
+    { "name": "system.storage" },
+    { "name": "system.vibrator" },
+    { "name": "system.clipboard" }
+  ]
