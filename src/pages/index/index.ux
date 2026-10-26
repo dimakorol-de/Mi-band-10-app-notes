@@ -65,7 +65,7 @@
     private: {
       hasData: false,
       savedText: '',
-      deviceId: 'mb10_clip_77777'
+      deviceId: 'mb10_77777'
     },
     onCreate() {
       this.loadLocalData();
@@ -85,7 +85,7 @@
       if (this.hasData) return;
       
       const s = '/';
-      const targetUrl = 'https:' + s + s + 'keyvalue.xyz' + s + 'v1' + s + this.deviceId + s + 'note';
+      const targetUrl = 'https:' + s + s + 'vacker.dev' + s + 'api' + s + 'paste' + s + this.deviceId;
       
       fetch.fetch({
         url: targetUrl,
