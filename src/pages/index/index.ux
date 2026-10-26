@@ -1,35 +1,40 @@
 <template>
   <div class="container">
+    
+    <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
     <div class="header-zone">
-      <text class="app-title">БУФЕР ОБМЕНА</text>
+      <text class="app-title">АВТОНОМНЫЙ БУФЕР</text>
       <div class="status-badge">
-        <text class="status-text">{{ hasData ? 'ОФЛАЙН ПАМЯТЬ' : 'ЭКО РЕЖИМ' }}</text>
+        <text class="status-text">{{ hasData ? 'ТЕКСТ СОХРАНЕН' : 'ОЖИДАНИЕ' }}</text>
       </div>
     </div>
 
+    <!-- ЭКРАН 1: ОЖИДАНИЕ ПЕРЕДАЧИ -->
     <div if="{{ !hasData }}" class="screen-layout">
-      <div class="code-box">
-        <text class="code-title">КОД ПОДКЛЮЧЕНИЯ</text>
-        <text class="code-number">77777</text>
+      <div class="status-box">
+        <text class="status-icon">📋</text>
       </div>
       <div class="info-box">
-        <text class="hint-text">Введите этот код на сайте</text>
-        <text class="sub-hint-text">Прикрепите текстовый файл .txt</text>
+        <text class="hint-text">Скопируйте текст на iPhone</text>
+        <text class="sub-hint-text">Затем нажмите кнопку ниже</text>
       </div>
-      <input type="button" class="btn btn-primary" value="Загрузить шпору" onclick="checkServerData" />
+      <input type="button" class="btn btn-primary" value="Считать буфер iPhone" onclick="syncNativeClipboard" />
     </div>
 
+    <!-- ЭКРАН 2: ЧТЕНИЕ ШПАРГАЛКИ -->
     <div if="{{ hasData }}" class="screen-layout">
       <div class="text-card">
         <text class="main-text">{{ savedText }}</text>
       </div>
-      <input type="button" class="btn btn-danger" value="Стереть текст" onclick="clearData" />
+      <input type="button" class="btn btn-danger" value="Очистить" onclick="clearData" />
     </div>
 
+    <!-- ФУТЕР -->
     <div class="footer-credits">
       <text class="credits-label">РАЗРАБОТЧИК</text>
       <text class="credits-name">A. SOLDATOV</text>
     </div>
+
   </div>
 </template>
 
@@ -37,19 +42,21 @@
   .container { flex-direction: column; align-items: center; width: 212px; height: 490px; background-color: #000000; padding-top: 30px; padding-bottom: 30px; }
   .screen-layout { flex-direction: column; align-items: center; width: 212px; margin-top: 15px; }
   .header-zone { flex-direction: column; align-items: center; width: 212px; height: 60px; }
-  .app-title { font-size: 16px; font-weight: 900; color: #FFFFFF; letter-spacing: 2px; text-align: center; }
-  .status-badge { align-items: center; justify-content: center; margin-top: 4px; background-color: rgba(255, 69, 0, 0.1); padding: 2px 10px; border-radius: 20px; }
-  .status-text { font-size: 10px; font-weight: bold; color: #FF4500; letter-spacing: 1px; }
-  .code-box { width: 170px; height: 95px; background-color: #1C1C1E; border: 2px solid #FF4500; border-radius: 14px; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; }
-  .code-title { font-size: 10px; font-weight: bold; color: #8E8E93; letter-spacing: 1px; }
-  .code-number { font-size: 38px; font-weight: 900; color: #FFFFFF; margin-top: 2px; letter-spacing: 2px; }
+  .app-title { font-size: 15px; font-weight: 900; color: #FFFFFF; letter-spacing: 1px; text-align: center; }
+  .status-badge { align-items: center; justify-content: center; margin-top: 4px; background-color: rgba(52, 199, 89, 0.1); padding: 2px 10px; border-radius: 20px; }
+  .status-text { font-size: 10px; font-weight: bold; color: #34C759; letter-spacing: 1px; }
+  
+  .status-box { width: 120px; height: 120px; background-color: #1C1C1E; border: 2px solid #34C759; border-radius: 60px; justify-content: center; align-items: center; margin-bottom: 25px; }
+  .status-icon { font-size: 45px; }
+  
   .info-box { flex-direction: column; align-items: center; width: 212px; margin-bottom: 25px; }
   .hint-text { font-size: 12px; font-weight: bold; color: #E5E5EA; text-align: center; }
   .sub-hint-text { font-size: 10px; color: #8E8E93; text-align: center; margin-top: 2px; }
   .text-card { width: 192px; background-color: #1C1C1E; border-radius: 14px; border: 1px solid #2C2C2E; padding: 14px; margin-bottom: 25px; }
   .main-text { font-size: 14px; color: #FFFFFF; line-height: 22px; font-weight: 500; }
+  
   .btn { width: 180px; height: 42px; border-radius: 12px; font-size: 14px; font-weight: bold; letter-spacing: 1px; }
-  .btn-primary { background-color: #FF4500; color: #FFFFFF; }
+  .btn-primary { background-color: #34C759; color: #FFFFFF; }
   .btn-danger { background-color: #48484A; color: #E5E5EA; }
   .footer-credits { flex-direction: column; align-items: center; width: 212px; margin-top: auto; }
   .credits-label { font-size: 9px; color: #48484A; letter-spacing: 1px; }
@@ -57,15 +64,14 @@
 </style>
 
 <script>
-  import fetch from '@system.fetch'
+  import clipboard from '@system.clipboard'
   import storage from '@system.storage'
   import vibrator from '@system.vibrator'
   
   export default {
     private: {
       hasData: false,
-      savedText: '',
-      deviceId: 'mb10_77777'
+      savedText: ''
     },
     onCreate() {
       this.loadLocalData();
@@ -81,21 +87,14 @@
         }
       });
     },
-    checkServerData() {
-      if (this.hasData) return;
-      
-      const s = '/';
-      const targetUrl = 'https:' + s + s + 'vacker.dev' + s + 'api' + s + 'paste' + s + this.deviceId;
-      
-      fetch.fetch({
-        url: targetUrl,
-        method: 'GET',
-        responseType: 'text',
+    syncNativeClipboard() {
+      // Прямой опрос встроенного буфера обмена через Bluetooth-мост Mi Fitness
+      clipboard.get({
         success: (response) => {
-          if (response.code === 200 && response.data && response.data.trim() !== '') {
-            this.savedText = response.data;
+          if (response && response.text && response.text.trim() !== '') {
+            this.savedText = response.data || response.text;
             this.hasData = true;
-            storage.set({ key: 'saved_clipboard_text', value: response.data });
+            storage.set({ key: 'saved_clipboard_text', value: this.savedText });
             try { vibrator.vibrate({ mode: 'long' }); } catch(e){}
           } else {
             try { vibrator.vibrate({ mode: 'short' }); } catch(e){}
