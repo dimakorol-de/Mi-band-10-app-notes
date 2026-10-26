@@ -7,27 +7,25 @@
     private: {
       hasData: false,
       savedText: '',
-      deviceId: '',
+      deviceId: 'mb10_init_device',
       qrCodeUrl: ''
     },
     onCreate() {
+      this.generateSecureToken();
       this.loadLocalData();
     },
     generateSecureToken() {
-      const rNum = Math.random() * 900000;
-      const rand = Math.floor(100000 + rNum);
+      const rand = Math.floor(100000 + Math.random() * 900000);
       const ts = Date.now().toString().slice(-6);
       this.deviceId = 'mb10_clip_' + ts + '_' + rand;
       
       const s = '/';
-      // НАСТРОЙКА: Укажите здесь ваши реальные данные репозитория
       const username = 'dimakorol-de'; 
-      const repo = 'mi-band-10-app-notes'; // или имя вашего репо с загрузчиком
+      const repo = 'mi-band-10-app-notes';
       
-      // Сборка ссылки на ваш веб-интерфейс GitHub Pages
       const userWebUrl = 'https:' + s + s + username + '.github.io' + s + repo + s + '?token=' + this.deviceId;
       
-      // ИСПРАВЛЕНО: Удалены лишние символы "://", ломавшие работу API QRServer
+      // ИСПРАВЛЕНО: Убран лишний двоеточие со слэшами, добавлен поддомен api.
       const qrHost = 'https:' + s + s + 'api.qrserver.com';
       const qrPath = s + 'v1' + s + 'create-qr-code?size=128x128&data=';
       this.qrCodeUrl = qrHost + qrPath + encodeURIComponent(userWebUrl);
@@ -39,12 +37,7 @@
           if (data && data.trim() !== '') {
             this.savedText = data;
             this.hasData = true;
-          } else {
-            this.generateSecureToken();
           }
-        },
-        fail: () => {
-          this.generateSecureToken();
         }
       });
     },
