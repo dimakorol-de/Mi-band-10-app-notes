@@ -1,40 +1,43 @@
 <template>
   <div class="container">
     
-    <!-- ВЕРХНЯЯ ПАНЕЛЬ (ГОРЯТ ВСЕГДА) -->
+    <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
     <div class="header-zone">
-      <text class="app-title">CLIPBOARD</text>
+      <text class="app-title">БУФЕР ОБМЕНА</text>
       <div class="status-badge">
-        <text class="status-text">{{ hasData ? 'OFFLINE MEMORY' : 'ECO MODE' }}</text>
+        <text class="status-text">{{ hasData ? 'ОФЛАЙН ПАМЯТЬ' : 'ЭКО РЕЖИМ' }}</text>
       </div>
     </div>
 
-    <!-- ЭКРАН ОЖИДАНИЯ (Показываем, если данных нет) -->
+    <!-- ЭКРАН ОЖИДАНИЯ (Показываем код вместо QR) -->
     <div if="{{ !hasData }}" class="screen-layout">
-      <div class="qr-container">
-        <image class="qr-element" src="{{ qrCodeUrl }}"></image>
+      
+      <div class="code-box">
+        <text class="code-title">КОД ПОДКЛЮЧЕНИЯ</text>
+        <text class="code-number">{{ displayCode }}</text>
       </div>
       
       <div class="info-box">
-        <text class="hint-text">Сканируйте через iPhone</text>
-        <text class="sub-hint-text">Затем нажмите кнопку ниже</text>
+        <text class="hint-text">Введите этот код на сайте</text>
+        <text class="sub-hint-text">Прикрепите текстовый файл .txt</text>
+        <text class="sub-hint-text">И нажмите кнопку ниже</text>
       </div>
       
-      <input type="button" class="btn btn-primary" value="Получить текст" onclick="checkServerData" />
+      <input type="button" class="btn btn-primary" value="Загрузить шпору" onclick="checkServerData" />
     </div>
 
-    <!-- ЭКРАН ТЕКСТА (Показываем, когда данные прилетели) -->
+    <!-- ЭКРАН ТЕКСТА ШПАРГАЛКИ -->
     <div if="{{ hasData }}" class="screen-layout">
       <div class="text-card">
         <text class="main-text">{{ savedText }}</text>
       </div>
       
-      <input type="button" class="btn btn-danger" value="Очистить буфер" onclick="clearData" />
+      <input type="button" class="btn btn-danger" value="Стереть текст" onclick="clearData" />
     </div>
 
     <!-- СИСТЕМНЫЙ ФУТЕР -->
     <div class="footer-credits">
-      <text class="credits-label">SYSTEM LOG BY</text>
+      <text class="credits-label">РАЗРАБОТЧИК</text>
       <text class="credits-name">A. SOLDATOV</text>
     </div>
 
@@ -42,127 +45,29 @@
 </template>
 
 <style>
-  .container { 
-    flex-direction: column; 
-    align-items: center; 
-    width: 212px; 
-    height: 490px;
-    background-color: #000000; 
-    padding-top: 30px; 
-    padding-bottom: 30px; 
-  }
-  .screen-layout { 
-    flex-direction: column; 
-    align-items: center; 
-    width: 212px; 
-    margin-top: 10px;
-  }
-  .header-zone { 
-    flex-direction: column; 
-    align-items: center; 
-    width: 212px; 
-    height: 60px;
-  }
-  .app-title { 
-    font-size: 16px; 
-    font-weight: 900; 
-    color: #FFFFFF; 
-    letter-spacing: 2px; 
-    text-align: center; 
-  }
-  .status-badge { 
-    align-items: center; 
-    justify-content: center; 
-    margin-top: 4px; 
-    background-color: rgba(255, 69, 0, 0.1); 
-    padding: 2px 10px; 
-    border-radius: 20px; 
-  }
-  .status-text { 
-    font-size: 10px; 
-    font-weight: bold; 
-    color: #FF4500; 
-    letter-spacing: 1px; 
-  }
-  .qr-container { 
-    width: 144px; 
-    height: 144px; 
-    background-color: #FFFFFF; 
-    border-radius: 16px; 
-    justify-content: center; 
-    align-items: center; 
-    margin-bottom: 15px; 
-  }
-  .qr-element { 
-    width: 128px; 
-    height: 128px; 
-  }
-  .info-box { 
-    flex-direction: column; 
-    align-items: center; 
-    width: 212px; 
-    margin-bottom: 15px;
-  }
-  .hint-text { 
-    font-size: 12px; 
-    font-weight: bold; 
-    color: #E5E5EA; 
-    text-align: center; 
-  }
-  .sub-hint-text { 
-    font-size: 10px; 
-    color: #8E8E93; 
-    text-align: center; 
-    margin-top: 2px; 
-  }
-  .text-card { 
-    width: 192px; 
-    background-color: #1C1C1E; 
-    border-radius: 14px; 
-    border: 1px solid #2C2C2E; 
-    padding: 14px; 
-    margin-bottom: 20px; 
-  }
-  .main-text { 
-    font-size: 14px; 
-    color: #FFFFFF; 
-    line-height: 22px; 
-    font-weight: 500; 
-  }
-  .btn { 
-    width: 180px; 
-    height: 42px; 
-    border-radius: 12px; 
-    font-size: 14px; 
-    font-weight: bold; 
-    letter-spacing: 1px; 
-  }
-  .btn-primary { 
-    background-color: #FF4500; 
-    color: #FFFFFF; 
-  }
-  .btn-danger { 
-    background-color: #48484A; 
-    color: #E5E5EA; 
-  }
-  .footer-credits { 
-    flex-direction: column; 
-    align-items: center; 
-    width: 212px; 
-    margin-top: auto;
-  }
-  .credits-label { 
-    font-size: 9px; 
-    color: #48484A; 
-    letter-spacing: 1px; 
-  }
-  .credits-name { 
-    font-size: 11px; 
-    font-weight: 900; 
-    color: #FFD700; 
-    letter-spacing: 1px; 
-    margin-top: 2px; 
-  }
+  .container { flex-direction: column; align-items: center; width: 212px; height: 490px; background-color: #000000; padding-top: 30px; padding-bottom: 30px; }
+  .screen-layout { flex-direction: column; align-items: center; width: 212px; margin-top: 15px; }
+  .header-zone { flex-direction: column; align-items: center; width: 212px; height: 60px; }
+  .app-title { font-size: 16px; font-weight: 900; color: #FFFFFF; letter-spacing: 2px; text-align: center; }
+  .status-badge { align-items: center; justify-content: center; margin-top: 4px; background-color: rgba(255, 69, 0, 0.1); padding: 2px 10px; border-radius: 20px; }
+  .status-text { font-size: 10px; font-weight: bold; color: #FF4500; letter-spacing: 1px; }
+  
+  /* Красивый блок для отображения 5 цифр */
+  .code-box { width: 170px; height: 95px; background-color: #1C1C1E; border: 2px solid #FF4500; border-radius: 14px; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0px 4px 15px rgba(255, 69, 0, 0.2); }
+  .code-title { font-size: 10px; font-weight: bold; color: #8E8E93; letter-spacing: 1px; }
+  .code-number { font-size: 38px; font-weight: 900; color: #FFFFFF; margin-top: 2px; letter-spacing: 2px; }
+  
+  .info-box { flex-direction: column; align-items: center; width: 212px; margin-bottom: 25px; }
+  .hint-text { font-size: 12px; font-weight: bold; color: #E5E5EA; text-align: center; }
+  .sub-hint-text { font-size: 10px; color: #8E8E93; text-align: center; margin-top: 2px; }
+  .text-card { width: 192px; background-color: #1C1C1E; border-radius: 14px; border: 1px solid #2C2C2E; padding: 14px; margin-bottom: 25px; }
+  .main-text { font-size: 14px; color: #FFFFFF; line-height: 22px; font-weight: 500; }
+  .btn { width: 180px; height: 42px; border-radius: 12px; font-size: 14px; font-weight: bold; letter-spacing: 1px; }
+  .btn-primary { background-color: #FF4500; color: #FFFFFF; }
+  .btn-danger { background-color: #48484A; color: #E5E5EA; }
+  .footer-credits { flex-direction: column; align-items: center; width: 212px; margin-top: auto; }
+  .credits-label { font-size: 9px; color: #48484A; letter-spacing: 1px; }
+  .credits-name { font-size: 11px; font-weight: 900; color: #FFD700; letter-spacing: 1px; margin-top: 2px; }
 </style>
 
 <script>
@@ -174,28 +79,18 @@
     private: {
       hasData: false,
       savedText: '',
-      deviceId: 'mb10_init_device',
-      qrCodeUrl: ''
+      deviceId: 'mb10_default_id',
+      displayCode: '00000'
     },
     onCreate() {
       this.generateSecureToken();
       this.loadLocalData();
     },
     generateSecureToken() {
-      const rand = Math.floor(100000 + Math.random() * 900000);
-      const ts = Date.now().toString().slice(-6);
-      this.deviceId = 'mb10_clip_' + ts + '_' + rand;
-      
-      const s = '/';
-      const username = 'dimakorol-de'; 
-      const repo = 'mi-band-10-app-notes';
-      
-      const userWebUrl = 'https:' + s + s + username + '.github.io' + s + repo + s + '?token=' + this.deviceId;
-      
-      // ИСПРАВЛЕНО: Убрано лишнее двоеточие со слэшами, добавлен поддомен api.
-      const qrHost = 'https:' + s + s + 'api.qrserver.com';
-      const qrPath = s + 'v1' + s + 'create-qr-code?size=128x128&data=' + encodeURIComponent(userWebUrl);
-      this.qrCodeUrl = qrHost + qrPath;
+      // Генерируем строго 5 цифр для мега-удобного ввода в Safari
+      const rand = Math.floor(10000 + Math.random() * 90000);
+      this.displayCode = rand.toString();
+      this.deviceId = 'mb10_clip_' + this.displayCode;
     },
     loadLocalData() {
       storage.get({
