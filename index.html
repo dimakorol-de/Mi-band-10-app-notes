@@ -34,7 +34,7 @@
 
     <script>
         document.getElementById('file-input').addEventListener('change', function(e) {
-            const file = e.target.files[0];
+            const file = e.target.files;
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function(evt) {
@@ -57,19 +57,14 @@
             statusMsg.style.color = "#FF4500";
 
             try {
-                // Используем сверхстабильный шлюзщик Paste.c-net
-                const response = await fetch('https://c-net.org', {
+                // Прямой обход CORS через Allorigins прокси
+                const targetApi = 'https://keyvalue.xyz_' + code + '/note';
+                const response = await fetch('https://allorigins.win' + encodeURIComponent(targetApi), {
                     method: 'POST',
                     body: text
                 });
 
                 if (response.ok) {
-                    const pasteUrl = await response.text();
-                    const pasteId = pasteUrl.trim().split('/').pop();
-                    
-                    // Сохраняем связку токена и ID пасты во вспомогательный роут
-                    await fetch('https://allorigins.win' + encodeURIComponent('https://keyvalue.xyz_' + code + '/id/' + pasteId), { method: 'POST' });
-
                     statusMsg.innerText = "Успешно отправлено! Нажмите кнопку на часах.";
                     statusMsg.style.color = "#34C759";
                 } else {
